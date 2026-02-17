@@ -21,11 +21,26 @@
           },
           animation: {
             'bounce-subtle': 'bounce-subtle 2s infinite',
+            'fade-in': 'fadeIn 0.2s ease-out',
+            'slide-up': 'slideInFromBottom 0.2s ease-out',
+            'zoom-in': 'zoomIn 0.1s ease-out',
           },
           keyframes: {
             'bounce-subtle': {
               '0%, 100%': { transform: 'translateY(-2%)', animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)' },
               '50%': { transform: 'translateY(0)', animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideInFromBottom: {
+              '0%': { transform: 'translateY(100%)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            zoomIn: {
+              '0%': { transform: 'scale(0.95)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' },
             }
           }
         }
@@ -33,7 +48,7 @@
     }
   </script>
 
-  <!-- Babel Standalone -->
+  <!-- Babel Standalone for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
@@ -41,6 +56,7 @@
       overscroll-behavior-y: none;
       -webkit-tap-highlight-color: transparent;
       -webkit-touch-callout: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -66,7 +82,7 @@
     import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client';
     import { 
       ChevronLeft, RotateCcw, Plus, X, User, Trophy, 
-      Undo2, History, Zap, Settings, Save, Check, Minus, Copy 
+      Undo2, History, Zap, Settings, Save, Check, Minus, Copy, LogOut, AlertTriangle 
     } from 'https://esm.sh/lucide-react@0.344.0';
 
     // --- CONSTANTS & DEFAULTS ---
@@ -96,31 +112,87 @@
       );
     };
 
+    // --- COMPONENT: CONFIRM MODAL ---
+    const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Đồng ý", cancelText = "Hủy" }) => {
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl animate-zoom-in">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-3">
+                <AlertTriangle className="w-6 h-6 text-yellow-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+              <p className="text-sm text-gray-500 mt-2">{message}</p>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="ghost" onClick={onCancel} className="flex-1 bg-gray-100">{cancelText}</Button>
+              <Button variant="danger" onClick={onConfirm} className="flex-1">{confirmText}</Button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     // --- COMPONENT: LAYOUT ---
-    const Layout = ({ title, onBack, onReset, children }) => {
+    const Layout = ({ title, onBack, onReset, onEndSession, children }) => {
+      const [confirmState, setConfirmState] = useState({ isOpen: false, type: null });
+
+      const handleResetClick = () => setConfirmState({ isOpen: true, type: 'RESET' });
+      const handleEndSessionClick = () => setConfirmState({ isOpen: true, type: 'END' });
+      
+      const handleConfirm = () => {
+        if (confirmState.type === 'RESET' && onReset) onReset();
+        if (confirmState.type === 'END' && onEndSession) onEndSession();
+        setConfirmState({ isOpen: false, type: null });
+      };
+
       return (
         <div className="min-h-screen flex flex-col bg-gray-50 max-w-md mx-auto shadow-2xl overflow-hidden relative border-x border-gray-100">
-          <header className="bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-            <div className="flex items-center gap-2">
+          <header className="bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm h-16">
+            <div className="flex items-center gap-2 overflow-hidden">
               {onBack && (
-                <button onClick={onBack} className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors">
+                <button onClick={onBack} className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors shrink-0">
                   <ChevronLeft className="w-6 h-6 text-gray-600" />
                 </button>
               )}
-              <h1 className="text-xl font-bold text-gray-800">{title}</h1>
+              <h1 className="text-xl font-bold text-gray-800 truncate">{title}</h1>
             </div>
-            {onReset && (
-              <button 
-                onClick={() => { if(window.confirm('Bạn có chắc muốn xóa hết điểm và lịch sử chơi không?')) onReset(); }} 
-                className="p-2 -mr-2 text-gray-400 hover:text-red-500 rounded-full transition-colors"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </button>
-            )}
+            <div className="flex items-center gap-1 shrink-0">
+              {onReset && (
+                <button 
+                  onClick={handleResetClick} 
+                  className="p-2 text-gray-400 hover:text-tet-gold rounded-full transition-colors"
+                  title="Chơi lại từ đầu (Giữ tên)"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+              )}
+              {onEndSession && (
+                <button 
+                  onClick={handleEndSessionClick} 
+                  className="p-2 -mr-2 text-gray-400 hover:text-red-600 rounded-full transition-colors"
+                  title="Đổi bàn / Kết thúc"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              )}
+            </div>
           </header>
           <main className="flex-1 overflow-y-auto p-4 pb-24 no-scrollbar">
             {children}
           </main>
+
+          <ConfirmModal 
+            isOpen={confirmState.isOpen}
+            onCancel={() => setConfirmState({ isOpen: false, type: null })}
+            onConfirm={handleConfirm}
+            title={confirmState.type === 'RESET' ? "Chơi lại từ đầu?" : "Kết thúc & Đổi bàn?"}
+            message={confirmState.type === 'RESET' 
+              ? "Điểm số sẽ về 0. Tên người chơi vẫn giữ nguyên." 
+              : "Toàn bộ dữ liệu bàn chơi này sẽ bị xóa để nhập danh sách người chơi mới."}
+            confirmText={confirmState.type === 'RESET' ? "Reset điểm" : "Xóa bàn"}
+          />
         </div>
       );
     };
@@ -131,7 +203,7 @@
       return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
           <div className="bg-gray-50 px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bảng Xếp Hạng</span>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bảng Tổng Sắp</span>
             <Trophy className="w-4 h-4 text-tet-gold" />
           </div>
           <div className="divide-y divide-gray-100">
@@ -182,16 +254,16 @@
 
       return (
         <div className="space-y-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><User className="w-5 h-5 text-tet-red" /> Thêm Người Chơi</h2>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-fade-in">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><User className="w-5 h-5 text-tet-red" /> Điểm danh người chơi</h2>
             <div className="flex gap-2 mb-6">
-              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addPlayer()} placeholder="Tên người chơi..." className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-tet-red focus:ring-1 focus:ring-tet-red transition-all" />
+              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addPlayer()} placeholder="Nhập tên..." className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-tet-red focus:ring-1 focus:ring-tet-red transition-all" />
               <Button onClick={addPlayer} disabled={!newName.trim()}><Plus className="w-6 h-6" /></Button>
             </div>
             <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-              {players.length === 0 && <div className="text-center py-4 text-gray-400 text-sm italic">Chưa có người chơi nào.</div>}
+              {players.length === 0 && <div className="text-center py-4 text-gray-400 text-sm italic">Chưa có ai. Thêm tên để bắt đầu!</div>}
               {players.map((p) => (
-                <div key={p.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-xl animate-[fadeIn_0.3s_ease-out]">
+                <div key={p.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-xl animate-fade-in">
                   <div className="flex items-center gap-3">
                     {gameMode === 'XIDACH' && (
                        <div onClick={() => setDealerId(p.id)} className={`w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors ${dealerId === p.id ? 'border-tet-red bg-tet-red' : 'border-gray-300'}`}>
@@ -204,9 +276,10 @@
                 </div>
               ))}
             </div>
+            {gameMode === 'XIDACH' && players.length > 0 && <p className="text-xs text-center text-gray-400 mt-4">Chạm vào hình tròn để chọn Nhà Cái</p>}
           </div>
           <div className="sticky bottom-4">
-            <Button fullWidth onClick={handleStart} disabled={players.length < 2}>Bắt đầu chơi ({players.length})</Button>
+            <Button fullWidth onClick={handleStart} disabled={players.length < 2}>Bắt đầu chơi ({players.length} người)</Button>
           </div>
         </div>
       );
@@ -287,9 +360,14 @@
       const resetGame = () => {
         setGameState({ ...gameState, players: gameState.players.map(p => ({ ...p, score: 0 })), history: [] });
       };
+      
+      const endSession = () => {
+          localStorage.removeItem('tienlen_state');
+          onBack(); 
+      }
 
       return (
-        <Layout title="Tiến Lên" onBack={onBack} onReset={resetGame}>
+        <Layout title="Tiến Lên" onBack={onBack} onReset={resetGame} onEndSession={endSession}>
           <Scoreboard players={gameState.players} />
           <div className="grid grid-cols-2 gap-3 mb-6">
             <Button onClick={() => setInputMode('RANKING')} className="h-24 flex flex-col items-center justify-center gap-2"><span className="text-2xl">🏆</span><span>Xếp Hạng</span></Button>
@@ -300,12 +378,12 @@
           </div>
           <div className="space-y-4">
              <div className="flex items-center justify-between px-2">
-                <h3 className="font-bold text-gray-500 text-sm uppercase flex items-center gap-2"><History className="w-4 h-4" /> Lịch sử</h3>
+                <h3 className="font-bold text-gray-500 text-sm uppercase flex items-center gap-2"><History className="w-4 h-4" /> Nhật ký</h3>
                 <button onClick={undoLast} disabled={gameState.history.length === 0} className="text-sm text-blue-600 font-medium disabled:opacity-30 flex items-center gap-1"><Undo2 className="w-4 h-4" /> Hoàn tác</button>
              </div>
              <div className="space-y-2">
                 {gameState.history.map(round => (
-                  <div key={round.id} className="bg-white p-3 rounded-xl border border-gray-100 text-sm">
+                  <div key={round.id} className="bg-white p-3 rounded-xl border border-gray-100 text-sm animate-fade-in">
                     <div className="flex justify-between text-gray-500 text-xs mb-1">
                       <span>{new Date(round.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                       <span className="font-medium">{round.description}</span>
@@ -327,13 +405,13 @@
           {/* Ranking Modal */}
           {inputMode === 'RANKING' && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
-              <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-[slideInFromBottom_0.2s_ease-out]">
+              <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold">Kết quả ván đấu</h2>
                   <button onClick={() => { setInputMode('NONE'); setSelectedRanks([]); }} className="p-2 bg-gray-100 rounded-full"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="space-y-3 mb-6">
-                  <p className="text-sm text-gray-500 mb-2">Chọn người chơi theo thứ tự về Nhất, Nhì...</p>
+                  <p className="text-sm text-gray-500 mb-2">Chọn theo thứ tự về Nhất, Nhì...</p>
                   <div className="grid grid-cols-2 gap-3">
                     {gameState.players.map(p => {
                       const rankIndex = selectedRanks.indexOf(p.id);
@@ -358,7 +436,7 @@
           {/* Pig Modal */}
           {inputMode === 'PIG' && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
-              <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-[slideInFromBottom_0.2s_ease-out]">
+              <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold flex items-center gap-2"><Zap className="w-5 h-5 text-yellow-500" /> Tính Điểm Chặt Heo</h2>
                   <button onClick={() => { setInputMode('NONE'); setPigCutter(null); setPigVictim(null); }} className="p-2 bg-gray-100 rounded-full"><X className="w-5 h-5" /></button>
@@ -393,10 +471,10 @@
             </div>
           )}
 
-          {/* Settings Modal */}
+          {/* Settings Modal - FIXED SECTION */}
           {inputMode === 'SETTINGS' && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
-              <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-[slideInFromBottom_0.2s_ease-out] max-h-[90vh] overflow-y-auto">
+              <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold flex items-center gap-2"><Settings className="w-5 h-5 text-gray-600" /> Cài Đặt Luật</h2>
                   <button onClick={() => setInputMode('NONE')} className="p-2 bg-gray-100 rounded-full"><X className="w-5 h-5" /></button>
@@ -542,6 +620,11 @@
         setGameState({ ...gameState, players: gameState.players.map(p => ({ ...p, score: 0 })), history: [] });
       };
 
+      const endSession = () => {
+          localStorage.removeItem('xidach_state');
+          onBack(); 
+      }
+
       const toggleMultiplier = (pid, val) => { setMultipliers(prev => ({...prev, [pid]: prev[pid] === val ? 1 : val})); }
       const setAllResults = (type) => {
           const newResults = {};
@@ -555,7 +638,7 @@
       }
 
       return (
-        <Layout title="Xì Dách" onBack={onBack} onReset={resetGame}>
+        <Layout title="Xì Dách" onBack={onBack} onReset={resetGame} onEndSession={endSession}>
           <Scoreboard players={gameState.players} dealerId={dealerId} />
           {!isRoundOpen ? (
             <div className="mb-6 space-y-3">
@@ -591,7 +674,7 @@
                           <button onClick={() => setResults({...results, [p.id]: 'WIN'})} className={`py-3 rounded-lg font-bold text-sm flex flex-col items-center gap-1 transition-all ${results[p.id] === 'WIN' ? 'bg-green-500 text-white shadow-md shadow-green-200' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}><Check className="w-5 h-5" /> Thắng</button>
                         </div>
                         {results[p.id] !== 'DRAW' && (
-                            <div className="flex gap-2 animate-[fadeIn_0.2s_ease-out]">
+                            <div className="flex gap-2 animate-fade-in">
                                <button onClick={() => toggleMultiplier(p.id, 2)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all ${multipliers[p.id] === 2 ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-gray-400 border-gray-200'}`}>x2 (Xì Dách)</button>
                                <button onClick={() => toggleMultiplier(p.id, 3)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all ${multipliers[p.id] === 3 ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-white text-gray-400 border-gray-200'}`}>x3 (Xì Bàn)</button>
                             </div>
@@ -607,12 +690,12 @@
           )}
           <div className="space-y-4">
              <div className="flex items-center justify-between px-2">
-                <h3 className="font-bold text-gray-500 text-sm uppercase flex items-center gap-2"><History className="w-4 h-4" /> Lịch sử</h3>
+                <h3 className="font-bold text-gray-500 text-sm uppercase flex items-center gap-2"><History className="w-4 h-4" /> Nhật ký</h3>
                 <button onClick={undoLast} disabled={gameState.history.length === 0} className="text-sm text-blue-600 font-medium disabled:opacity-30 flex items-center gap-1"><Undo2 className="w-4 h-4" /> Hoàn tác</button>
              </div>
              <div className="space-y-2">
                 {gameState.history.map(round => (
-                  <div key={round.id} className="bg-white p-3 rounded-xl border border-gray-100 text-sm">
+                  <div key={round.id} className="bg-white p-3 rounded-xl border border-gray-100 text-sm animate-fade-in">
                     <div className="flex justify-between text-gray-500 text-xs mb-1">
                       <span>{new Date(round.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                       <span className="font-medium">Kết quả ván</span>
@@ -651,12 +734,12 @@
               <div onClick={() => onSelect('TIENLEN')} className="group relative bg-white rounded-2xl p-6 shadow-sm border-2 border-transparent hover:border-tet-red transition-all cursor-pointer active:scale-95">
                 <div className="absolute top-4 right-4 text-3xl opacity-20 group-hover:opacity-100 transition-opacity">♠️</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">Tiến Lên</h3>
-                <p className="text-sm text-gray-500">Xếp hạng Nhất, Nhì, Ba & Chặt Heo.</p>
+                <p className="text-sm text-gray-500">Ghi điểm đánh bài.</p>
               </div>
               <div onClick={() => onSelect('XIDACH')} className="group relative bg-white rounded-2xl p-6 shadow-sm border-2 border-transparent hover:border-tet-red transition-all cursor-pointer active:scale-95">
                 <div className="absolute top-4 right-4 text-3xl opacity-20 group-hover:opacity-100 transition-opacity">🃏</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">Xì Dách</h3>
-                <p className="text-sm text-gray-500">Tính toán điểm số siêu tốc.</p>
+                <p className="text-sm text-gray-500">Tính điểm nhanh.</p>
               </div>
             </div>
             <p className="text-center text-xs text-gray-400 mt-8">Điểm được lưu tự động trên máy của bạn.</p>
