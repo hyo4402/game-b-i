@@ -322,7 +322,7 @@ export const TienLenGame: React.FC<TienLenGameProps> = ({ initialPlayers, onBack
                 <h3 className="font-bold text-sm text-gray-400 uppercase mb-3">Điểm Xếp Hạng</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-gray-600">Nhất (Cộng)</label>
+                    <label className="text-xs font-medium text-gray-600">Nhất</label>
                     <input 
                       type="number" 
                       value={editingRules.FIRST}
@@ -331,7 +331,7 @@ export const TienLenGame: React.FC<TienLenGameProps> = ({ initialPlayers, onBack
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-600">Nhì (Cộng)</label>
+                    <label className="text-xs font-medium text-gray-600">Nhì</label>
                     <input 
                       type="number" 
                       value={editingRules.SECOND}
@@ -340,28 +340,22 @@ export const TienLenGame: React.FC<TienLenGameProps> = ({ initialPlayers, onBack
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-600">Ba (Trừ)</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-600 font-bold">-</span>
-                      <input 
-                        type="number" 
-                        value={Math.abs(editingRules.THIRD)}
-                        onChange={e => setEditingRules({...editingRules, THIRD: -Math.abs(Number(e.target.value))})}
-                        className="w-full mt-1 p-2 pl-6 border rounded-lg font-mono text-orange-600"
-                      />
-                    </div>
+                    <label className="text-xs font-medium text-gray-600">Ba</label>
+                    <input 
+                      type="number" 
+                      value={editingRules.THIRD}
+                      onChange={e => setEditingRules({...editingRules, THIRD: Number(e.target.value)})}
+                      className="w-full mt-1 p-2 border rounded-lg font-mono text-orange-600"
+                    />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-600">Chót (Trừ)</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-red-600 font-bold">-</span>
-                      <input 
-                        type="number" 
-                        value={Math.abs(editingRules.LAST)}
-                        onChange={e => setEditingRules({...editingRules, LAST: -Math.abs(Number(e.target.value))})}
-                        className="w-full mt-1 p-2 pl-6 border rounded-lg font-mono text-red-600"
-                      />
-                    </div>
+                    <label className="text-xs font-medium text-gray-600">Chót</label>
+                    <input 
+                      type="number" 
+                      value={editingRules.LAST}
+                      onChange={e => setEditingRules({...editingRules, LAST: Number(e.target.value)})}
+                      className="w-full mt-1 p-2 border rounded-lg font-mono text-red-600"
+                    />
                   </div>
                 </div>
               </div>

@@ -1,38 +1,7 @@
-<!DOCTYPE html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Sổ Cái Tết</title>
-    <!-- Sử dụng Tailwind qua CDN cho đơn giản, trong dự án lớn nên cài qua npm -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              tet: {
-                red: '#D72638',
-                gold: '#FFC857',
-                dark: '#1F2937',
-                light: '#F3F4F6'
-              }
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      body {
-        overscroll-behavior-y: none;
-        -webkit-tap-highlight-color: transparent;
-      }
-    </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
     "lucide-react": "https://esm.sh/lucide-react@^0.572.0",
     "vite": "https://esm.sh/vite@^7.3.1",
@@ -40,10 +9,41 @@
   }
 }
 </script>
-</head>
-  <body class="bg-gray-50 text-gray-900 select-none">
-    <div id="root"></div>
-    <!-- Vite sẽ xử lý file tsx này -->
-    <script type="module" src="/index.tsx"></script>
-  </body>
-</html>
+                  <div>
+                    <h3 className="font-bold text-sm text-gray-400 uppercase mb-3">Điểm Xếp Hạng</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Mapping inputs manually */}
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Nhất (Cộng)</label>
+                        <input type="number" value={editingRules.FIRST} onChange={e => setEditingRules({...editingRules, FIRST: Number(e.target.value)})} className="w-full mt-1 p-2 border rounded-lg font-mono text-green-600" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Nhì (Cộng)</label>
+                        <input type="number" value={editingRules.SECOND} onChange={e => setEditingRules({...editingRules, SECOND: Number(e.target.value)})} className="w-full mt-1 p-2 border rounded-lg font-mono text-blue-600" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Ba (Trừ)</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-600 font-bold">-</span>
+                          <input 
+                            type="number" 
+                            value={Math.abs(editingRules.THIRD)} 
+                            onChange={e => setEditingRules({...editingRules, THIRD: -Math.abs(Number(e.target.value))})} 
+                            className="w-full mt-1 p-2 pl-6 border rounded-lg font-mono text-orange-600" 
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Chót (Trừ)</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-red-600 font-bold">-</span>
+                          <input 
+                            type="number" 
+                            value={Math.abs(editingRules.LAST)} 
+                            onChange={e => setEditingRules({...editingRules, LAST: -Math.abs(Number(e.target.value))})} 
+                            className="w-full mt-1 p-2 pl-6 border rounded-lg font-mono text-red-600" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
