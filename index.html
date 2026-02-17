@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Sổ Cái Tết</title>
+  <title>Sổ Sách Vui Xuân</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -393,7 +393,7 @@
             </div>
           )}
 
-          {/* Settings Modal - FIXED SECTION */}
+          {/* Settings Modal */}
           {inputMode === 'SETTINGS' && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
               <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-[slideInFromBottom_0.2s_ease-out] max-h-[90vh] overflow-y-auto">
@@ -560,7 +560,7 @@
           {!isRoundOpen ? (
             <div className="mb-6 space-y-3">
               <Button fullWidth onClick={() => setIsRoundOpen(true)} className="h-16 text-lg shadow-xl animate-bounce-subtle">Bắt đầu ván mới</Button>
-              <p className="text-center text-xs text-gray-400">Tiền cược sẽ tự động lưu lại cho ván sau.</p>
+              <p className="text-center text-xs text-gray-400">Điểm cược sẽ tự động lưu lại cho ván sau.</p>
             </div>
           ) : (
             <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
@@ -572,7 +572,7 @@
                    <button onClick={() => setAllResults('LOSE')} className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap"><Zap className="w-3 h-3" /> Cái ăn hết</button>
                    <button onClick={() => setAllResults('DRAW')} className="flex items-center gap-1 px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-lg text-xs font-bold whitespace-nowrap">Hòa hết</button>
                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                   <button onClick={() => { const firstVal = Object.values(bets)[0]; if(typeof firstVal === 'string') applyBetToAll(firstVal); }} className="flex items-center gap-1 px-3 py-1.5 bg-white text-gray-600 border border-gray-200 rounded-lg text-xs font-bold whitespace-nowrap"><Copy className="w-3 h-3" /> Copy tiền cược</button>
+                   <button onClick={() => { const firstVal = Object.values(bets)[0]; if(typeof firstVal === 'string') applyBetToAll(firstVal); }} className="flex items-center gap-1 px-3 py-1.5 bg-white text-gray-600 border border-gray-200 rounded-lg text-xs font-bold whitespace-nowrap"><Copy className="w-3 h-3" /> Copy điểm cược</button>
                </div>
                <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
                   {gameState.players.filter(p => p.id !== dealerId).map(p => (
@@ -580,9 +580,8 @@
                       <div className="flex justify-between items-center mb-3">
                         <span className="font-bold text-lg truncate max-w-[150px]">{p.name}</span>
                         <div className="flex items-center gap-1 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 focus-within:ring-2 focus-within:ring-tet-red/20 focus-within:border-tet-red transition-all">
-                          <span className="text-gray-400 text-sm">$</span>
                           <input type="number" inputMode="numeric" value={bets[p.id] || ''} onChange={(e) => setBets({...bets, [p.id]: e.target.value})} className="w-16 text-right font-mono font-bold bg-transparent outline-none text-gray-900" />
-                          <span className="text-gray-400 text-xs font-bold">k</span>
+                          <span className="text-gray-400 text-xs font-bold">điểm</span>
                         </div>
                       </div>
                       <div className="flex flex-col gap-3">
@@ -645,19 +644,19 @@
           <div className="w-full max-w-sm space-y-8">
             <div className="text-center space-y-2">
               <div className="inline-block bg-tet-red rounded-2xl p-4 shadow-xl mb-4 rotate-3"><span className="text-4xl">🧧</span></div>
-              <h1 className="text-4xl font-black text-gray-900 tracking-tight">Sổ Cái<br/><span className="text-tet-red">Ngày Tết</span></h1>
-              <p className="text-gray-500">Ghi điểm bài bạc, vui xuân phát tài.</p>
+              <h1 className="text-4xl font-black text-gray-900 tracking-tight">Sổ Sách<br/><span className="text-tet-red">Vui Xuân</span></h1>
+              <p className="text-gray-500">Ghi điểm giải trí, lộc xuân sum vầy.</p>
             </div>
             <div className="space-y-4">
               <div onClick={() => onSelect('TIENLEN')} className="group relative bg-white rounded-2xl p-6 shadow-sm border-2 border-transparent hover:border-tet-red transition-all cursor-pointer active:scale-95">
                 <div className="absolute top-4 right-4 text-3xl opacity-20 group-hover:opacity-100 transition-opacity">♠️</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">Tiến Lên</h3>
-                <p className="text-sm text-gray-500">Chấm điểm Nhất, Nhì, Ba, Chót & Chặt Heo.</p>
+                <p className="text-sm text-gray-500">Xếp hạng Nhất, Nhì, Ba & Chặt Heo.</p>
               </div>
               <div onClick={() => onSelect('XIDACH')} className="group relative bg-white rounded-2xl p-6 shadow-sm border-2 border-transparent hover:border-tet-red transition-all cursor-pointer active:scale-95">
                 <div className="absolute top-4 right-4 text-3xl opacity-20 group-hover:opacity-100 transition-opacity">🃏</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">Xì Dách</h3>
-                <p className="text-sm text-gray-500">Nhà cái vs Nhà con. Tính tiền cược nhanh.</p>
+                <p className="text-sm text-gray-500">Tính toán điểm số siêu tốc.</p>
               </div>
             </div>
             <p className="text-center text-xs text-gray-400 mt-8">Điểm được lưu tự động trên máy của bạn.</p>
