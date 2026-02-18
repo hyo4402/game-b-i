@@ -212,7 +212,6 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
       <Scoreboard players={gameState.players} dealerId={gameState.dealerId} />
 
       {!isRoundOpen ? (
-        <>
         <div className="mb-6 space-y-3">
           <div className="flex gap-3">
              <Button fullWidth onClick={() => setIsRoundOpen(true)} className="h-16 text-lg shadow-floating bg-gradient-to-r from-tet-red to-rose-600 border-0">Bắt đầu ván mới</Button>
@@ -227,39 +226,6 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
           </div>
           <p className="text-center text-xs text-gray-400 font-medium mt-2">Điểm góp vui được lưu tự động.</p>
         </div>
-        
-        <div className="space-y-4">
-             <div className="flex items-center justify-between px-2">
-                <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm uppercase flex items-center gap-2"><History className="w-4 h-4" /> Lịch sử</h3>
-                <button onClick={undoLast} disabled={gameState.history.length === 0} className="text-sm text-blue-600 dark:text-blue-400 font-medium disabled:opacity-30 flex items-center gap-1"><Undo2 className="w-4 h-4" /> Hoàn tác</button>
-             </div>
-             <div className="space-y-2">
-                {gameState.history.map(round => (
-                  <div key={round.id} className="bg-white dark:bg-dark-card p-3 rounded-xl border border-gray-100 dark:border-gray-700 text-sm">
-                    <div className="flex justify-between text-gray-500 dark:text-gray-400 text-xs mb-1">
-                      <span>{new Date(round.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">{round.description}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      {Object.entries(round.scoreChanges).map(([pid, value]) => {
-                        const score = value as number; if (score === 0) return null;
-                        const pName = gameState.players.find(p => p.id === pid)?.name;
-                        const isDealer = pid === (gameState.dealerId || dealerId);
-                        
-                        return (
-                            <span key={pid} className={`${score > 0 ? 'text-tet-win' : 'text-tet-lose'} font-medium flex items-center gap-1`}>
-                                {isDealer && <Crown className="w-3 h-3 text-yellow-500 fill-yellow-500"/>}
-                                {pName}: {score > 0 ? '+' : ''}{score}
-                            </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-                {gameState.history.length === 0 && <div className="text-center py-8 text-gray-400 text-sm">Chưa có ván nào.</div>}
-             </div>
-          </div>
-        </>
       ) : (
         <div className="fixed inset-0 bg-[#F8FAFC] dark:bg-dark-bg z-50 flex flex-col transition-colors">
            <div className="bg-white dark:bg-dark-card px-4 py-2 flex items-center justify-between shadow-sm shrink-0 z-10 border-b border-gray-100 dark:border-gray-800">
