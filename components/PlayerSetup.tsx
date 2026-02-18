@@ -1,1 +1,0 @@
-// File moved to src/components/PlayerSetup.tsx
