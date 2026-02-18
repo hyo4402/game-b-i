@@ -18,9 +18,6 @@ const App: React.FC = () => {
     // Check if there's a saved session for this mode to resume
     const savedState = localStorage.getItem(selectedMode === 'TIENLEN' ? 'tienlen_state' : 'xidach_state');
     if (savedState) {
-      // If save exists, we can jump to playing, but we let the specific Game Component handle loading the state.
-      // We just need to signal we are playing.
-      // However, for consistency, we pass empty players here and let the component hydrate from local storage.
       setStep('PLAYING');
     } else {
       setStep('SETUP_PLAYERS');
@@ -34,7 +31,6 @@ const App: React.FC = () => {
   };
 
   const handleBack = () => {
-    // When going back to home, we don't clear local storage, effectively "Pausing" the game
     setStep('SELECT_GAME');
     setMode('HOME');
     setPlayers([]);
