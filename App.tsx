@@ -16,19 +16,24 @@ const App: React.FC = () => {
     setMode(selectedMode);
     
     // Check if there's a saved session for this mode to resume
-    const savedState = localStorage.getItem(selectedMode === 'TIENLEN' ? 'tienlen_state' : 'xidach_state');
-    if (savedState) {
-      try {
+    try {
+      const savedState = localStorage.getItem(selectedMode === 'TIENLEN' ? 'tienlen_state' : 'xidach_state');
+      if (savedState) {
         const parsed = JSON.parse(savedState);
-        if (parsed.players && parsed.players.length > 0) {
+        if (parsed.players && Array.isArray(parsed.players) && parsed.players.length > 0) {
             setPlayers(parsed.players);
-            if (parsed.dealerId) setDealerId(parsed.dealerId);
+            if (selectedMode === 'XIDACH') {
+                // Ensure dealer ID is valid
+                const validDealer = parsed.players.find((p: Player) => p.id === parsed.dealerId);
+                setDealerId(validDealer ? validDealer.id : parsed.players[0].id);
+            }
             setStep('PLAYING');
             return;
         }
-      } catch (e) {
-        console.error("Error parsing saved state", e);
       }
+    } catch (e) {
+      console.error("Error parsing saved state", e);
+      // If error, just proceed to setup
     }
     setStep('SETUP_PLAYERS');
   };
@@ -36,6 +41,7 @@ const App: React.FC = () => {
   const handleStartGame = (setupPlayers: Player[], dealer?: string) => {
     setPlayers(setupPlayers);
     if (dealer) setDealerId(dealer);
+    else if (setupPlayers.length > 0) setDealerId(setupPlayers[0].id);
     setStep('PLAYING');
   };
 
