@@ -5,6 +5,7 @@ import { PlayerSetup } from './components/PlayerSetup';
 import { TienLenGame } from './components/TienLenGame';
 import { XiDachGame } from './components/XiDachGame';
 import { Layout } from './components/Layout';
+import { safeGet } from './utils/storage';
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<GameMode>('HOME');
@@ -15,27 +16,23 @@ const App: React.FC = () => {
   const handleGameSelect = (selectedMode: GameMode) => {
     setMode(selectedMode);
     
-    // Check if there's a saved session for this mode to resume
-    try {
-      const savedState = localStorage.getItem(selectedMode === 'TIENLEN' ? 'tienlen_state' : 'xidach_state');
-      if (savedState) {
-        const parsed = JSON.parse(savedState);
-        if (parsed.players && Array.isArray(parsed.players) && parsed.players.length > 0) {
-            setPlayers(parsed.players);
-            if (selectedMode === 'XIDACH') {
-                // Ensure dealer ID is valid
-                const validDealer = parsed.players.find((p: Player) => p.id === parsed.dealerId);
-                setDealerId(validDealer ? validDealer.id : parsed.players[0].id);
-            }
-            setStep('PLAYING');
-            return;
+    // Attempt to resume previous session safely
+    const storageKey = selectedMode === 'TIENLEN' ? 'tienlen_state' : 'xidach_state';
+    const savedState = safeGet<any>(storageKey, null);
+
+    if (savedState && savedState.players && Array.isArray(savedState.players) && savedState.players.length > 0) {
+        setPlayers(savedState.players);
+        
+        if (selectedMode === 'XIDACH') {
+            // Validate dealer
+            const validDealer = savedState.players.find((p: Player) => p.id === savedState.dealerId);
+            setDealerId(validDealer ? validDealer.id : savedState.players[0].id);
         }
-      }
-    } catch (e) {
-      console.error("Error parsing saved state", e);
-      // If error, just proceed to setup
+        
+        setStep('PLAYING');
+    } else {
+        setStep('SETUP_PLAYERS');
     }
-    setStep('SETUP_PLAYERS');
   };
 
   const handleStartGame = (setupPlayers: Player[], dealer?: string) => {

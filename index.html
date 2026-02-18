@@ -74,7 +74,8 @@
       }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      * { transition-property: background-color, border-color, color, fill, stroke; transition-duration: 200ms; }
+      /* Prevent text selection on mobile for app-like feel */
+      .select-none { user-select: none; -webkit-user-select: none; }
     </style>
   <script type="importmap">
 {

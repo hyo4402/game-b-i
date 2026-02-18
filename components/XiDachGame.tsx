@@ -4,8 +4,9 @@ import { Scoreboard } from './Scoreboard';
 import { Button } from './Button';
 import { Layout } from './Layout';
 import { PlayerManager } from './PlayerManager';
-import { Undo2, History, X, Check, Minus, Zap, Copy, ArrowRightLeft, Crown, Trash2, Users, Plus } from 'lucide-react';
+import { Undo2, History, X, Zap, Copy, ArrowRightLeft, Crown, Trash2, Users } from 'lucide-react';
 import { playSound, triggerConfetti, vibrate } from '../utils/audio';
+import { safeGet, safeSet } from '../utils/storage';
 
 interface XiDachGameProps {
   initialPlayers: Player[];
@@ -19,18 +20,28 @@ type MultiplierType = 1 | 2 | 3;
 const CHIP_VALUES = [5, 10, 20, 50, 100, 200, 500];
 
 export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId, onBack }) => {
+  // Use safeGet to initialize state without crashing
   const [gameState, setGameState] = useState<GameState>(() => {
-    const saved = localStorage.getItem('xidach_state');
-    const parsed = saved ? JSON.parse(saved) : { players: initialPlayers, history: [], dealerId };
+    const saved = safeGet<GameState | null>('xidach_state', null);
     
-    // Ensure data integrity if props change but local storage is stale
-    if (!parsed.players || parsed.players.length === 0) parsed.players = initialPlayers;
-    
-    if (!parsed.defaultBets) parsed.defaultBets = {};
-    if (!parsed.dealerId && dealerId) parsed.dealerId = dealerId; 
-    // Fallback if dealerID is missing in saved state but present in props or players
-    if (!parsed.dealerId && parsed.players.length > 0) parsed.dealerId = parsed.players[0].id;
-    return parsed;
+    // Create default state
+    const defaultState: GameState = { 
+        players: initialPlayers, 
+        history: [], 
+        dealerId: dealerId,
+        defaultBets: {}
+    };
+
+    if (!saved) return defaultState;
+
+    // Validate saved state structure
+    if (!saved.players || saved.players.length === 0) saved.players = initialPlayers;
+    if (!saved.dealerId) saved.dealerId = dealerId || (saved.players[0]?.id);
+    if (!saved.defaultBets) saved.defaultBets = {};
+    if (!saved.history) saved.history = [];
+
+    // Ensure current props players are merged if needed, or trust props if saved is empty
+    return saved;
   });
 
   const [bets, setBets] = useState<Record<string, string>>({}); 
@@ -41,7 +52,10 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
   const [isChangeDealerOpen, setIsChangeDealerOpen] = useState(false);
   const [isPlayerManagerOpen, setIsPlayerManagerOpen] = useState(false);
 
-  useEffect(() => { localStorage.setItem('xidach_state', JSON.stringify(gameState)); }, [gameState]);
+  // Safe save on change
+  useEffect(() => { 
+      safeSet('xidach_state', gameState); 
+  }, [gameState]);
 
   // Sync state when round opens OR players change
   useEffect(() => {
@@ -84,12 +98,12 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
       setGameState(prev => ({
           ...prev,
           players: [...prev.players, newPlayer],
-          defaultBets: { ...prev.defaultBets, [newPlayer.id]: 10 } // Default bet 10k
+          defaultBets: { ...prev.defaultBets, [newPlayer.id]: 10 }
       }));
   };
 
   const handleRemovePlayer = (id: string) => {
-      if (id === gameState.dealerId) return; // Prevention handled in Modal too
+      if (id === gameState.dealerId) return;
       setGameState(prev => ({
           ...prev,
           players: prev.players.filter(p => p.id !== id)
@@ -116,8 +130,6 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
 
     gameState.players.forEach(p => {
       if (p.id === gameState.dealerId) return;
-      
-      // Safety check if player was removed mid-round (unlikely but possible)
       if (!bets[p.id]) return;
 
       const betAmount = parseInt(bets[p.id] || '0', 10);
@@ -140,20 +152,13 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
       if (finalChange !== 0) { changes[p.id] = finalChange; dealerDelta -= finalChange; }
     });
 
-    // Dealer update
-    if (gameState.dealerId) {
-        changes[gameState.dealerId] = dealerDelta;
-    }
-    
+    if (gameState.dealerId) changes[gameState.dealerId] = dealerDelta;
     if (dealerDelta > 100 || dealerMultiplier > 1) hasBigWin = true;
-
     if (hasBigWin) { triggerConfetti(); playSound('win'); } else { playSound('coin'); }
 
     setGameState(prev => ({ ...prev, defaultBets: newDefaultBets }));
     updateScores(changes, dealerMultiplier === 2 ? 'Chủ Xị Xì Dách' : dealerMultiplier === 3 ? 'Chủ Xị Xì Bàn' : 'Kết quả ván');
     setIsRoundOpen(false);
-    
-    // Reset Round State (optional, but good for cleanup)
     setDealerMultiplier(1);
   };
   
@@ -202,7 +207,6 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
       const activePlayers = gameState.players.filter(p => p.id !== gameState.dealerId);
       if (activePlayers.length === 0) return;
       const firstBet = bets[activePlayers[0].id] || '0';
-      
       const newBets: Record<string, string> = {};
       gameState.players.forEach(p => { if (p.id !== gameState.dealerId) newBets[p.id] = firstBet; });
       setBets(newBets);
@@ -249,7 +253,6 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
                         const score = value as number; if (score === 0) return null;
                         const pName = gameState.players.find(p => p.id === pid)?.name;
                         const isDealer = pid === (gameState.dealerId || dealerId);
-                        
                         return (
                             <span key={pid} className={`${score > 0 ? 'text-tet-win' : 'text-tet-lose'} font-medium flex items-center gap-1`}>
                                 {isDealer && <Crown className="w-3 h-3 text-yellow-500 fill-yellow-500"/>}
@@ -284,7 +287,6 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
               </div>
            </div>
 
-           {/* Quick Chips Bar - Additive */}
            <div className="bg-gray-50 dark:bg-gray-900/50 px-4 py-3 border-b border-gray-200 dark:border-gray-800 shrink-0">
                <div className="flex gap-2 overflow-x-auto no-scrollbar items-center">
                    <button onClick={clearBets} className="shrink-0 p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg mr-2"><Trash2 className="w-4 h-4" /></button>
@@ -294,7 +296,6 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
                       </button>
                    ))}
                </div>
-               {/* Quick Actions */}
                <div className="flex gap-2 mt-2 overflow-x-auto no-scrollbar">
                    <button onClick={() => setAllResults('LOSE')} className="px-3 py-1 bg-red-50 text-red-600 rounded text-xs font-bold whitespace-nowrap"><Zap className="w-3 h-3 inline"/> Chủ xị tất tay</button>
                    <button onClick={() => setAllResults('DRAW')} className="px-3 py-1 bg-yellow-50 text-yellow-600 rounded text-xs font-bold whitespace-nowrap">Hòa cả làng</button>
@@ -313,7 +314,6 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
                 let statusColor = 'text-gray-400';
                 let statusText = '';
 
-                // Visual Feedback Logic
                 if (isDealerSpecial) {
                     if (playerMult === dealerMultiplier) { cardBg = 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'; statusText = 'HÒA CÙNG HÀNG'; statusColor = 'text-yellow-600 dark:text-yellow-400'; }
                     else if (playerMult > dealerMultiplier) { cardBg = 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'; statusText = 'MAY MẮN'; statusColor = 'text-green-600 dark:text-green-400'; }
@@ -359,6 +359,7 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
            </div>
         </div>
       )}
+      
        {isChangeDealerOpen && (
          <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
             <div className="bg-white dark:bg-dark-card w-full max-w-xs rounded-2xl p-6 shadow-2xl animate-zoom-in border border-gray-200 dark:border-gray-700">

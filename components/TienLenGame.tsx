@@ -4,8 +4,9 @@ import { Scoreboard } from './Scoreboard';
 import { Button } from './Button';
 import { Layout } from './Layout';
 import { PlayerManager } from './PlayerManager';
-import { Undo2, History, X, Zap, Settings, Save, Users } from 'lucide-react';
+import { Undo2, History, X, Settings, Save, Users } from 'lucide-react';
 import { playSound, triggerConfetti } from '../utils/audio';
+import { safeGet, safeSet } from '../utils/storage';
 
 interface TienLenGameProps {
   initialPlayers: Player[];
@@ -14,11 +15,12 @@ interface TienLenGameProps {
 
 export const TienLenGame: React.FC<TienLenGameProps> = ({ initialPlayers, onBack }) => {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const saved = localStorage.getItem('tienlen_state');
+    const saved = safeGet<GameState | null>('tienlen_state', null);
     if (saved) {
-      const parsed = JSON.parse(saved);
-      if (!parsed.tienLenRules) parsed.tienLenRules = DEFAULT_TIENLEN_RULES;
-      return parsed;
+      if (!saved.tienLenRules) saved.tienLenRules = DEFAULT_TIENLEN_RULES;
+      if (!saved.players) saved.players = initialPlayers;
+      if (!saved.history) saved.history = [];
+      return saved;
     }
     return { players: initialPlayers, history: [], tienLenRules: DEFAULT_TIENLEN_RULES };
   });
@@ -29,7 +31,9 @@ export const TienLenGame: React.FC<TienLenGameProps> = ({ initialPlayers, onBack
   const [pigVictim, setPigVictim] = useState<string | null>(null);
   const [editingRules, setEditingRules] = useState<TienLenRules>(DEFAULT_TIENLEN_RULES);
 
-  useEffect(() => { localStorage.setItem('tienlen_state', JSON.stringify(gameState)); }, [gameState]);
+  useEffect(() => { 
+      safeSet('tienlen_state', gameState);
+  }, [gameState]);
 
   const rules = gameState.tienLenRules || DEFAULT_TIENLEN_RULES;
 
