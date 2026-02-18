@@ -22,6 +22,10 @@ export const XiDachGame: React.FC<XiDachGameProps> = ({ initialPlayers, dealerId
   const [gameState, setGameState] = useState<GameState>(() => {
     const saved = localStorage.getItem('xidach_state');
     const parsed = saved ? JSON.parse(saved) : { players: initialPlayers, history: [], dealerId };
+    
+    // Ensure data integrity if props change but local storage is stale
+    if (!parsed.players || parsed.players.length === 0) parsed.players = initialPlayers;
+    
     if (!parsed.defaultBets) parsed.defaultBets = {};
     if (!parsed.dealerId && dealerId) parsed.dealerId = dealerId; 
     // Fallback if dealerID is missing in saved state but present in props or players

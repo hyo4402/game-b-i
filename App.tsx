@@ -18,10 +18,19 @@ const App: React.FC = () => {
     // Check if there's a saved session for this mode to resume
     const savedState = localStorage.getItem(selectedMode === 'TIENLEN' ? 'tienlen_state' : 'xidach_state');
     if (savedState) {
-      setStep('PLAYING');
-    } else {
-      setStep('SETUP_PLAYERS');
+      try {
+        const parsed = JSON.parse(savedState);
+        if (parsed.players && parsed.players.length > 0) {
+            setPlayers(parsed.players);
+            if (parsed.dealerId) setDealerId(parsed.dealerId);
+            setStep('PLAYING');
+            return;
+        }
+      } catch (e) {
+        console.error("Error parsing saved state", e);
+      }
     }
+    setStep('SETUP_PLAYERS');
   };
 
   const handleStartGame = (setupPlayers: Player[], dealer?: string) => {
