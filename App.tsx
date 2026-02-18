@@ -1,0 +1,1 @@
+// File moved to src/App.tsx

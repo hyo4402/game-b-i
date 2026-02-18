@@ -1,0 +1,1 @@
+// File moved to src/components/Scoreboard.tsx
